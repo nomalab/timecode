@@ -1,0 +1,13 @@
+{
+  "name": "tc",
+  "version": "1.0.0",
+  "description": "Timcode helper",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "author": "Nomalab",
+  "devDependencies": {
+    "tape": "^5.0.1"
+  }
+}
