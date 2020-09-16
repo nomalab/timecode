@@ -1,7 +1,7 @@
 {
   "name": "tc",
   "version": "1.0.0",
-  "description": "Timcode helper",
+  "description": "Timecode helpers (some of them) from ffmpeg in js",
   "main": "index.js",
   "scripts": {
     "test": "tape test.js"

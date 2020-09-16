@@ -2,6 +2,7 @@ var test = require('tape');
 var rational = require('./rational');
 var tc = require('./index');
 
+
 test('rational', function (t) {
   t.plan(13);
 
@@ -21,7 +22,6 @@ test('rational', function (t) {
     new rational.Rational(102, 44),
     new rational.Rational(23, 12)
   ), 1);
-
 
   t.equal(rational.av_gcd(123, 246), 123);
 
@@ -59,10 +59,6 @@ test('rational', function (t) {
 });
 
 
-
-
-
-
 test('timecode', function (t) {
   t.plan(1);
 
@@ -75,8 +71,6 @@ test('timecode', function (t) {
 
   t.equal(tc0.av_timecode_make_string(120), "00:00:04:20", "tc0.av_timecode_make_string(120) = 00:00:04:20");
 });
-
-
 
 
 test('timecode with drop frame (29.97)', function (t) {
@@ -93,7 +87,6 @@ test('timecode with drop frame (29.97)', function (t) {
 });
 
 
-
 test('timecode with drop frame (59.94)', function (t) {
   t.plan(1);
 
@@ -108,3 +101,25 @@ test('timecode with drop frame (59.94)', function (t) {
 });
 
 
+test('parse timcode from string @25', function (t) {
+  t.plan(1);
+
+  var tc0 = tc.parse(
+    new rational.Rational(25, 1),
+    "00:12:24:23"
+  );
+
+  t.equal(tc0.start, 18623, "tc.parse");
+});
+
+
+test('parse timcode from string @29.97', function (t) {
+  t.plan(1);
+
+  var tc0 = tc.parse(
+    new rational.Rational(30000, 1001),
+    "00:12:24;23"
+  );
+
+  t.equal(tc0.start, 22321, "tc.parse");
+});

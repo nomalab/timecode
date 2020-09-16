@@ -25,7 +25,7 @@ function FFMIN(a, b) {
   return a > b ? b : a;
 }
 
-exports. FFMIN = FFMIN;
+exports.FFMIN = FFMIN;
 
 
 class Rational {

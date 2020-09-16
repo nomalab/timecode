@@ -1,5 +1,7 @@
 /*
  * index.js
+ * porting https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/timecode.h
+ * https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/timecode.c
  */
 
 
@@ -33,6 +35,14 @@ exports.av_timecode_adjust_ntsc_framenum2 = function(framenum, fps) {
 };
 
 
+exports.fps_from_frame_rate = function(rate) {
+  if (!rate.den || !rate.num) {
+    return -1;
+  }  
+  return Math.floor((rate.num + Math.floor(rate.den/2)) / rate.den);
+};
+
+
 exports.Flags = class Flags {
   constructor(dropframe, max24hours, allownegative) {
     ///< timecode is drop frame
@@ -46,7 +56,8 @@ exports.Flags = class Flags {
 
 
 exports.Timecode = class Timecode {
-  constructor(start, flags, rate, fps) {
+
+  constructor(start, flags, rate) {
     ///< timecode frame start (first base frame number)
     this.start = start;
     ///< flags such as drop frame, +24 hours support, ...
@@ -54,7 +65,9 @@ exports.Timecode = class Timecode {
     ///< frame rate in rational form
     this.rate = rate;
     ///< frame per second; must be consistent with the rate field
-    this.fps = fps;
+    this.fps = exports.fps_from_frame_rate(rate);
+    console.log('this.fps', this.fps)
+    return this.check_timecode();
   }
 
   /**
@@ -92,5 +105,77 @@ exports.Timecode = class Timecode {
     }
     return `${neg ? '-' : ''}${(hh+"").padStart(2, '0')}:${(mm+"").padStart(2, '0')}:${(ss+"").padStart(2, '0')}${drop ? ';' : ':'}${(ff+"").padStart(2, '0')}`;
   }
+
+
+  check_fps() {
+    var i;
+    var supported_fps = [
+      24, 25, 30, 48, 50, 60, 100, 120, 150
+    ];
+
+    for (i = 0; i < supported_fps.length; i++) {
+      if (this.fps == supported_fps[i]) {
+        return 0;
+      }
+    }
+    return -1;
+  }
+
+  check_timecode(){
+    if (this.fps <= 0) {
+        console.log("Valid timecode frame rate must be specified. Minimum value is 1.");
+        return 1;
+    }
+    if ((this.flags.dropframe) && this.fps != 30 && this.fps != 60) {
+        console.log("Drop frame is only allowed with 30000/1001 or 60000/1001 FPS\n");
+        return 2;
+    }
+    if (this.check_fps() < 0) {
+        console.log("Using non-standard frame rate %d/%d", this.rate.num, this.rate.den);
+    }
+    return 0;
+  }
 };
+
+/**
+ * Parse timecode representation (hh:mm:ss[:;.]ff).
+ *
+ * @param log_ctx a pointer to an arbitrary struct of which the first field is a
+ *                pointer to an AVClass struct (used for av_log).
+ * @param tc      pointer to an allocated AVTimecode
+ * @param rate    frame rate in rational form
+ * @param str     timecode string which will determine the frame start
+ * @return        0 on success, AVERROR otherwise
+ */
+exports.av_timecode_init_from_string = function(rate, str) {
+  var c;
+  var hh, mm, ss, ff, ret;
+
+  var exp = /([0-9][0-9]):([0-9][0-9]):([0-9][0-9])([;:])([0-9]+)/;
+  var match = str.match(exp);
+
+  if(match) {
+    hh = parseInt(match[1], 10);
+    mm = parseInt(match[2], 10);
+    ss = parseInt(match[3], 10);
+    c = match[4];
+    ff = parseInt(match[5]);
+    var tc = new exports.Timecode(0, new exports.Flags(c != ':', true, false), rate);
+
+    tc.start = (hh*3600 + mm*60 + ss) * tc.fps + ff;
+    console.log('tc.fps', tc.fps)
+    if (tc.flags.dropframe) { /* adjust frame number */
+        var tmins = 60*hh + mm;
+        tc.start -= (tc.fps == 30 ? 2 : 4) * (tmins - Math.floor(tmins/10));
+    }
+    return tc;
+  } else {
+    throw new Error("Invalid timecode string");
+  }
+}
+
+/*
+ * alias
+ */
+exports.parse = exports.av_timecode_init_from_string;
 
