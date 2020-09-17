@@ -83,6 +83,18 @@ exports.Timecode = class Timecode {
    * @note The frame number is relative to tc->start.
    */
   av_timecode_make_string(framenum) {
+    var rslt = this.make_array(framenum);
+    var neg = rslt[0];
+    var hh = rslt[1];
+    var mm = rslt[2];
+    var ss = rslt[3];
+    var drop = rslt[4];
+    var ff = rslt[5];
+    return `${neg}${(hh+"").padStart(2, '0')}:${(mm+"").padStart(2, '0')}:${(ss+"").padStart(2, '0')}${drop}${(ff+"").padStart(2, '0')}`;
+  }
+
+
+  make_array(framenum) {
     var fps = this.fps;
     var drop = this.flags.dropframe;
     var hh, mm, ss, ff, neg = false;
@@ -103,9 +115,8 @@ exports.Timecode = class Timecode {
     if (this.flags.max24hours) {
       hh = hh % 24;
     }
-    return `${neg ? '-' : ''}${(hh+"").padStart(2, '0')}:${(mm+"").padStart(2, '0')}:${(ss+"").padStart(2, '0')}${drop ? ';' : ':'}${(ff+"").padStart(2, '0')}`;
+    return [neg ? '-' : '', hh, mm, ss, drop ? ';' : ':', ff ];
   }
-
 
   check_fps() {
     var i;
