@@ -66,7 +66,7 @@ exports.Timecode = class Timecode {
     this.rate = rate;
     ///< frame per second; must be consistent with the rate field
     this.fps = exports.fps_from_frame_rate(rate);
-    console.log('this.fps', this.fps)
+
     return this.check_timecode();
   }
 
@@ -83,20 +83,21 @@ exports.Timecode = class Timecode {
    * @note The frame number is relative to tc->start.
    */
   av_timecode_make_string(framenum) {
-    var rslt = this.make_array(framenum);
-    var neg = rslt[0];
-    var hh = rslt[1];
-    var mm = rslt[2];
-    var ss = rslt[3];
-    var drop = rslt[4];
-    var ff = rslt[5];
+    var tc = this.make(framenum);
+    var neg = tc.sign;
+    var hh = tc.hour;
+    var mm = tc.minute;
+    var ss = tc.second;
+    var drop = tc.drop;
+    var ff = tc.frame;
     return `${neg}${(hh+"").padStart(2, '0')}:${(mm+"").padStart(2, '0')}:${(ss+"").padStart(2, '0')}${drop}${(ff+"").padStart(2, '0')}`;
   }
 
 
-  make_array(framenum) {
+  make(framenum) {
     var fps = this.fps;
     var drop = this.flags.dropframe;
+    
     var hh, mm, ss, ff, neg = false;
 
     framenum += this.start;
@@ -115,8 +116,17 @@ exports.Timecode = class Timecode {
     if (this.flags.max24hours) {
       hh = hh % 24;
     }
-    return [neg ? '-' : '', hh, mm, ss, drop ? ';' : ':', ff ];
+
+    return {
+      sign: neg ? '-' : '',
+      hour: hh,
+      minute: mm,
+      second: ss,
+      drop: drop ? ';' : ':',
+      frame: ff
+    };
   }
+
 
   check_fps() {
     var i;
@@ -158,7 +168,7 @@ exports.Timecode = class Timecode {
  * @param str     timecode string which will determine the frame start
  * @return        0 on success, AVERROR otherwise
  */
-exports.av_timecode_init_from_string = function(rate, str) {
+exports.av_timecode_init_from_string = function(rate, str, flags) {
   var c;
   var hh, mm, ss, ff, ret;
 
@@ -171,10 +181,10 @@ exports.av_timecode_init_from_string = function(rate, str) {
     ss = parseInt(match[3], 10);
     c = match[4];
     ff = parseInt(match[5]);
-    var tc = new exports.Timecode(0, new exports.Flags(c != ':', true, false), rate);
+    var tc = new exports.Timecode(0, flags || new exports.Flags(c != ':', true, false), rate);
 
     tc.start = (hh*3600 + mm*60 + ss) * tc.fps + ff;
-    console.log('tc.fps', tc.fps)
+
     if (tc.flags.dropframe) { /* adjust frame number */
         var tmins = 60*hh + mm;
         tc.start -= (tc.fps == 30 ? 2 : 4) * (tmins - Math.floor(tmins/10));
