@@ -123,3 +123,17 @@ test('parse timcode from string @29.97', function (t) {
 
   t.equal(tc0.start, 22321, "tc.parse");
 });
+
+
+test('calcul1 @24000/1001', function (t) {
+  t.plan(1);
+
+  var images = Math.floor(1292.042 * (24000/1001));
+
+  var tc0 = tc.parse(
+    new rational.Rational(24000, 1001),
+    "00:59:59:00"
+  );
+
+  t.equal(tc0.av_timecode_make_string(images), "01:21:29:17", "tc.av_timecode_make_string");
+});
