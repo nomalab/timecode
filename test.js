@@ -101,7 +101,7 @@ test('timecode with drop frame (59.94)', function (t) {
 });
 
 
-test('parse timcode from string @25', function (t) {
+test('parse timecode from string @25', function (t) {
   t.plan(1);
 
   var tc0 = tc.parse(
@@ -113,7 +113,7 @@ test('parse timcode from string @25', function (t) {
 });
 
 
-test('parse timcode from string @29.97', function (t) {
+test('parse timecode from string @29.97', function (t) {
   t.plan(1);
 
   var tc0 = tc.parse(
@@ -125,15 +125,53 @@ test('parse timcode from string @29.97', function (t) {
 });
 
 
-test('calcul1 @24000/1001', function (t) {
+test('throw invalid timecode string', function (t) {
+  t.plan(4);
+
+    t.throws(function () {
+    tc.parse(
+      new rational.Rational(30000, 1001),
+      ""
+    )
+  }, 'Throws `Invalid timecode string`');
+
+  t.throws(function () {
+    tc.parse(
+      new rational.Rational(30000, 1001),
+      "plopplop"
+    )
+  }, 'Throws `Invalid timecode string`');
+
+  t.throws(function () {
+    tc.parse(
+      new rational.Rational(30000, 1001),
+      "dsadsa32100:12:24;23"
+    )
+  }, 'Throws `Invalid timecode string`');
+
+  t.throws(function () {
+    tc.parse(
+      new rational.Rational(30000, 1001),
+      "dsadsa32100:12:24;23gokgokrekgoke"
+    )
+  }, 'Throws `Invalid timecode string`');
+});
+
+
+test('add 1292.042 seconds to 00:59:59:00@24000/1001 = 01:21:29:17', function (t) {
   t.plan(1);
 
+  // duration in seconds
+  var duration = 1292.042;
+  // images range
   var images = Math.floor(1292.042 * (24000/1001));
+  // frame number
+  var imageNumber = images - 1;
 
   var tc0 = tc.parse(
     new rational.Rational(24000, 1001),
     "00:59:59:00"
   );
 
-  t.equal(tc0.av_timecode_make_string(images), "01:21:29:17", "tc.av_timecode_make_string");
+  t.equal(tc0.av_timecode_make_string(imageNumber), "01:21:29:17", "tc.av_timecode_make_string");
 });

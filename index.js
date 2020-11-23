@@ -172,7 +172,7 @@ exports.av_timecode_init_from_string = function(rate, str, flags) {
   var c;
   var hh, mm, ss, ff, ret;
 
-  var exp = /([0-9][0-9]):([0-9][0-9]):([0-9][0-9])([;:])([0-9]+)/;
+  var exp = /^([0-9][0-9]):([0-9][0-9]):([0-9][0-9])([;:])([0-9]+)$/;
   var match = str.match(exp);
 
   if(match) {
